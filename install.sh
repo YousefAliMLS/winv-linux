@@ -45,11 +45,23 @@ step "Detected session: $SESSION, desktop: $DESKTOP"
 
 # --------------------------------------------------------------- dependencies
 install_deps() {
-    step "Installing system packages"
+    step "Checking and installing required system packages"
     if command -v apt-get >/dev/null; then
-        sudo apt-get update -qq
-        sudo apt-get install -y python3 python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 \
-            gir1.2-gdkpixbuf-2.0 python3-evdev libglib2.0-bin xwayland fonts-noto-color-emoji
+        local pkgs=(python3 python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-gdkpixbuf-2.0 python3-evdev libglib2.0-bin xwayland fonts-noto-color-emoji)
+        local missing=()
+        for pkg in "${pkgs[@]}"; do
+            dpkg -s "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+        done
+        if [[ ${#missing[@]} -gt 0 ]]; then
+            step "Installing missing packages: ${missing[*]}"
+            # Do not let broken third-party repositories abort the installer
+            sudo apt-get update || warn "Some apt repositories reported errors (ignoring broken third-party PPAs)..."
+            sudo apt-get install -y --no-install-recommends "${missing[@]}" || sudo apt-get install -y "${missing[@]}" || {
+                warn "Failed to install some packages via apt: ${missing[*]}"
+            }
+        else
+            ok "All required packages are already installed"
+        fi
     elif command -v dnf >/dev/null; then
         sudo dnf install -y python3 python3-gobject gtk4 libadwaita gdk-pixbuf2 \
             python3-evdev glib2 xorg-x11-server-Xwayland google-noto-color-emoji-fonts
@@ -94,7 +106,7 @@ cp "$REPO_DIR/data/$APP_ID.svg" "$ICON_DIR/$APP_ID.svg"
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$APP_DIR" || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 ok "Launcher: $BIN_DIR/winv"
-case ":$PATH:" in *":$BIN_DIR:"*) ;; *) warn "$BIN_DIR is not in your PATH (shortcuts use the absolute path, so that's fine)." ;; esac
+sudo ln -sf "$BIN_DIR/winv" /usr/local/bin/winv 2>/dev/null && ok "Symlinked to /usr/local/bin/winv" || true
 
 # ------------------------------------------------------------ uinput (paste)
 setup_uinput() {

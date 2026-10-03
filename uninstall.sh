@@ -20,6 +20,7 @@ echo "==> Removing files"
 rm -rf "$HOME/.local/lib/winv"
 rm -f "$BIN_DIR/winv" "$HOME/.local/share/applications/$APP_ID.desktop" \
       "$HOME/.local/share/icons/hicolor/scalable/apps/$APP_ID.svg"
+sudo rm -f /usr/local/bin/winv 2>/dev/null || true
 
 if command -v gsettings >/dev/null && gsettings list-schemas | grep -q org.gnome.settings-daemon.plugins.media-keys; then
     echo "==> Removing GNOME shortcuts"
