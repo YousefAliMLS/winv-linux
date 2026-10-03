@@ -95,14 +95,26 @@ EOF
 
 # -------------------------------------------------------------------- files
 step "Installing WinV to $LIB_DIR"
-mkdir -p "$BIN_DIR" "$LIB_DIR" "$APP_DIR" "$ICON_DIR" "$UNIT_DIR"
+# Fix any root-owned folders in ~/.local or ~/.config created by past sudo/root installers (e.g. Cisco Packet Tracer)
+sudo chown -R "$(id -u):$(id -g)" "$HOME/.local/share/icons" "$HOME/.local/share/applications" "$HOME/.local/lib" 2>/dev/null || true
+
+mkdir -p "$BIN_DIR" "$LIB_DIR" "$APP_DIR" "$UNIT_DIR"
+mkdir -p "$ICON_DIR" 2>/dev/null || true
+
 rm -rf "$LIB_DIR/winv"
 cp -r "$REPO_DIR/winv" "$LIB_DIR/winv"
 find "$LIB_DIR" -name '__pycache__' -prune -exec rm -rf {} +
 sed "s|@WINV_HOME@|$LIB_DIR|" "$REPO_DIR/bin/winv" > "$BIN_DIR/winv"
 chmod 755 "$BIN_DIR/winv"
 sed "s|@BIN_DIR@|$BIN_DIR|g" "$REPO_DIR/data/$APP_ID.desktop" > "$APP_DIR/$APP_ID.desktop"
-cp "$REPO_DIR/data/$APP_ID.svg" "$ICON_DIR/$APP_ID.svg"
+
+# Install icon to user directory and system directory
+if [[ -d "$ICON_DIR" ]]; then
+    cp "$REPO_DIR/data/$APP_ID.svg" "$ICON_DIR/$APP_ID.svg" 2>/dev/null || true
+fi
+sudo mkdir -p /usr/share/icons/hicolor/scalable/apps 2>/dev/null || true
+sudo cp "$REPO_DIR/data/$APP_ID.svg" /usr/share/icons/hicolor/scalable/apps/"$APP_ID.svg" 2>/dev/null || true
+
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$APP_DIR" || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 ok "Launcher: $BIN_DIR/winv"
