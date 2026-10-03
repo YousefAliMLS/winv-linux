@@ -1,0 +1,14 @@
+[Unit]
+Description=WinV clipboard popup (preloaded so Super+V opens instantly)
+PartOf=graphical-session.target
+After=graphical-session.target winv-watcher.service
+
+[Service]
+Type=dbus
+BusName=io.github.winv.WinV
+ExecStart=@BIN_DIR@/winv ui --hidden
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical-session.target

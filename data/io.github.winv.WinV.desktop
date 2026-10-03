@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Name=WinV Clipboard
+GenericName=Clipboard History
+Comment=Clipboard history and emoji picker (Super+V)
+Exec=@BIN_DIR@/winv toggle
+Icon=io.github.winv.WinV
+Terminal=false
+Categories=Utility;GTK;
+Keywords=clipboard;history;paste;emoji;
+StartupNotify=false
+Actions=emoji;clear;
+
+[Desktop Action emoji]
+Name=Emoji Picker
+Exec=@BIN_DIR@/winv emoji
+
+[Desktop Action clear]
+Name=Clear History
+Exec=@BIN_DIR@/winv clear

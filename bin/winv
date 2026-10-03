@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# WinV launcher.
+#
+#   winv            toggle the clipboard popup   (bind this to Super+V)
+#   winv emoji      toggle the emoji picker      (bind this to Super+.)
+#   winv watch      run the clipboard watcher daemon
+#   winv ui         run the resident popup app (add --hidden to start hidden)
+#   winv clear      clear history   |   winv doctor   diagnose the setup
+#
+# Fast path: if the popup app is already running we poke it over D-Bus with
+# gdbus (a few milliseconds) instead of starting a Python interpreter.
+set -u
+
+APP_ID="io.github.winv.WinV"
+OBJECT_PATH="/io/github/winv/WinV"
+# Replaced by install.sh; falls back to the repository checkout.
+WINV_HOME="@WINV_HOME@"
+if [[ "$WINV_HOME" == "@"*"@" ]]; then
+    WINV_HOME="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+fi
+
+cmd="${1:-toggle}"
+case "$cmd" in
+    toggle) action="toggle" ;;
+    emoji)  action="show-emoji" ;;
+    *)      action="" ;;
+esac
+
+if [[ -n "$action" ]] && command -v gdbus >/dev/null 2>&1; then
+    # Forward the compositor's activation token so the popup is allowed focus.
+    token="${XDG_ACTIVATION_TOKEN:-${DESKTOP_STARTUP_ID:-}}"
+    platform="{}"
+    if [[ -n "$token" ]]; then
+        platform="{'activation-token': <'${token}'>, 'desktop-startup-id': <'${token}'>}"
+    fi
+    if gdbus call --session --timeout 2 --dest "$APP_ID" --object-path "$OBJECT_PATH" \
+            --method org.gtk.Actions.Activate "$action" "[]" "$platform" >/dev/null 2>&1; then
+        exit 0
+    fi
+fi
+
+export PYTHONPATH="${WINV_HOME}${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m winv "$@"

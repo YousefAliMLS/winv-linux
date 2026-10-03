@@ -1,0 +1,4 @@
+# Grants the user logged in at the physical seat access to /dev/uinput via a
+# systemd-logind ACL ("uaccess"), so WinV can send the Ctrl+V keystroke on
+# Wayland without root and without joining the "input" group.
+KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"

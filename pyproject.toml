@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "winv"
+version = "1.0.0"
+description = "A lightweight Linux alternative to Windows 'Win + V' clipboard history and emoji picker."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Yousef Mahmoud Ali" }
+]
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: X11 Applications :: GTK",
+    "Environment :: Wayland",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Desktop Environment",
+    "Topic :: Utilities",
+]
+
+[project.scripts]
+winv = "winv.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["winv*"]
+
+[tool.setuptools.package-data]
+winv = ["data/*.json"]
