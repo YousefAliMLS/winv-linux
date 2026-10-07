@@ -27,8 +27,8 @@ def copy_paths_to_clipboard(
 
     if paths:
         for p in paths:
-            if p.strip():
-                clean = p.strip()
+            clean = p.rstrip("\r\n")
+            if clean:
                 if clean.startswith("file://"):
                     clean = unquote(urlparse(clean).path)
                 try:
@@ -37,16 +37,17 @@ def copy_paths_to_clipboard(
                     resolved_paths.append(clean)
     else:
         # Check Nautilus script environment variables
-        nautilus_selected = os.environ.get("NAUTILUS_SCRIPT_SELECTED_FILE_PATHS", "").strip()
+        nautilus_selected = os.environ.get("NAUTILUS_SCRIPT_SELECTED_FILE_PATHS", "")
         if nautilus_selected:
             for line in nautilus_selected.splitlines():
-                if line.strip():
+                clean = line.rstrip("\r\n")
+                if clean:
                     try:
-                        resolved_paths.append(str(Path(line.strip()).resolve()))
+                        resolved_paths.append(str(Path(clean).resolve()))
                     except Exception:
-                        resolved_paths.append(line.strip())
+                        resolved_paths.append(clean)
         else:
-            current_uri = os.environ.get("NAUTILUS_SCRIPT_CURRENT_URI", "").strip()
+            current_uri = os.environ.get("NAUTILUS_SCRIPT_CURRENT_URI", "").rstrip("\r\n")
             if current_uri:
                 clean = unquote(urlparse(current_uri).path) if current_uri.startswith("file://") else current_uri
                 try:

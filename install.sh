@@ -101,8 +101,9 @@ sudo chown -R "$(id -u):$(id -g)" "$HOME/.local/share/icons" "$HOME/.local/share
 mkdir -p "$BIN_DIR" "$LIB_DIR" "$APP_DIR" "$UNIT_DIR"
 mkdir -p "$ICON_DIR" 2>/dev/null || true
 
-rm -rf "$LIB_DIR/winv"
-cp -r "$REPO_DIR/winv" "$LIB_DIR/winv"
+rm -rf "${LIB_DIR:?}"/*
+mkdir -p "$LIB_DIR/winv"
+cp -r "$REPO_DIR/winv"/* "$LIB_DIR/winv/"
 find "$LIB_DIR" -name '__pycache__' -prune -exec rm -rf {} +
 sed "s|@WINV_HOME@|$LIB_DIR|" "$REPO_DIR/bin/winv" > "$BIN_DIR/winv"
 chmod 755 "$BIN_DIR/winv"
