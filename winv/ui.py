@@ -531,6 +531,10 @@ class WinVApp(Adw.Application):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", callback)
             self.add_action(action)
+
+        copy_action = Gio.SimpleAction.new("copy-text", GLib.VariantType.new("s"))
+        copy_action.connect("activate", lambda _a, param: self.commit_text(param.get_string(), paste=False))
+        self.add_action(copy_action)
         self.win = MainWindow(self)
 
     def do_activate(self) -> None:

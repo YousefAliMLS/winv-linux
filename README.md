@@ -23,6 +23,7 @@ WinV delivers a lightweight, responsive alternative to the Windows clipboard his
 * **Item Pinning and Cleanup**: Pin vital commands and code snippets with Ctrl+P to protect them when clearing history.
 * **Privacy Conscious**: Automatically detects and ignores sensitive entries marked by password managers such as KeePassXC and Bitwarden.
 * **Deduplication**: Re-copying previously saved items promotes them to the top without storing duplicates.
+* **Right-Click Copy as Path**: Adds Windows-style Copy as Path to the Nautilus file manager context menu, supporting single and multiple selections, quoted paths, and desktop notifications.
 
 ---
 

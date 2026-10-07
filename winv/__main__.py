@@ -20,8 +20,12 @@ def main() -> int:
     sub.add_parser("emoji", help="show/hide the emoji picker")
     clear = sub.add_parser("clear", help="delete clipboard history")
     clear.add_argument("--all", action="store_true", help="also delete pinned items")
+    cp = sub.add_parser("copy-path", help="copy file or directory paths to clipboard")
+    cp.add_argument("paths", nargs="*", help="paths to copy")
+    cp.add_argument("-q", "--quoted", action="store_true", help="wrap paths in quotes")
+    cp.add_argument("--no-notify", dest="notify", action="store_false", default=True, help="suppress notification")
     sub.add_parser("doctor", help="diagnose the setup")
-    args = parser.parse_args()
+    args, extra = parser.parse_known_args()
 
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
@@ -42,6 +46,9 @@ def main() -> int:
         Store().clear(keep_pinned=not args.all)
         print("History cleared.")
         return 0
+    if cmd == "copy-path":
+        from .copypath import copy_paths_to_clipboard
+        return 0 if copy_paths_to_clipboard(paths=args.paths, quoted=args.quoted, notify=args.notify) else 1
     if cmd == "doctor":
         from .doctor import run
         return run()

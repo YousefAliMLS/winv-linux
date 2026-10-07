@@ -47,7 +47,7 @@ step "Detected session: $SESSION, desktop: $DESKTOP"
 install_deps() {
     step "Checking and installing required system packages"
     if command -v apt-get >/dev/null; then
-        local pkgs=(python3 python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-gdkpixbuf-2.0 python3-evdev libglib2.0-bin xwayland fonts-noto-color-emoji)
+        local pkgs=(python3 python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-gdkpixbuf-2.0 python3-evdev libglib2.0-bin xwayland fonts-noto-color-emoji python3-nautilus)
         local missing=()
         for pkg in "${pkgs[@]}"; do
             dpkg -s "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
@@ -119,6 +119,16 @@ command -v update-desktop-database >/dev/null && update-desktop-database -q "$AP
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 ok "Launcher: $BIN_DIR/winv"
 sudo ln -sf "$BIN_DIR/winv" /usr/local/bin/winv 2>/dev/null && ok "Symlinked to /usr/local/bin/winv" || true
+
+# -------------------------------------------------------- nautilus integration
+step "Installing Nautilus 'Copy as Path' extension & scripts"
+NAUTILUS_EXT_DIR="$HOME/.local/share/nautilus-python/extensions"
+NAUTILUS_SCRIPTS_DIR="$HOME/.local/share/nautilus/scripts"
+mkdir -p "$NAUTILUS_EXT_DIR" "$NAUTILUS_SCRIPTS_DIR"
+cp "$REPO_DIR/data/nautilus/copy_as_path.py" "$NAUTILUS_EXT_DIR/copy_as_path.py"
+cp "$REPO_DIR/data/nautilus/scripts/"* "$NAUTILUS_SCRIPTS_DIR/"
+chmod +x "$NAUTILUS_SCRIPTS_DIR/"*
+ok "Nautilus integration installed"
 
 # ------------------------------------------------------------ uinput (paste)
 setup_uinput() {

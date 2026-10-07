@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Nautilus script: Copy as Path (quoted)
+export PATH="$HOME/.local/bin:$PATH"
+exec winv copy-path -q
