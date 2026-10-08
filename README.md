@@ -42,7 +42,9 @@ WinV delivers a lightweight, responsive alternative to the Windows clipboard his
 
 ## Quick Installation
 
-Run the automated installation script from the project root:
+### Option 1: Automated Installer (Recommended)
+
+Run the installation script from source:
 
 ```bash
 git clone https://github.com/YousefAliMLS/winv-linux.git
@@ -51,7 +53,15 @@ chmod +x install.sh
 ./install.sh
 ```
 
-The installer performs dependency verification, deploys systemd user units, enables rootless virtual keyboard input permissions, and configures native desktop shortcuts.
+### Option 2: Debian / Ubuntu Package (.deb)
+
+Download the latest release package from the Releases page, then install it with apt:
+
+```bash
+sudo apt install ./winv_1.0.0_all.deb
+```
+
+The installer verifies system dependencies, deploys background user services, enables virtual keyboard access via uinput, and registers desktop keyboard shortcuts.
 
 ---
 
@@ -106,6 +116,16 @@ Community contributions, issue reports, and feature requests are welcome.
 1. Fork the repository.
 2. Create a dedicated feature branch.
 3. Submit a pull request detailing your improvements or bug fixes.
+
+---
+
+## Contributors and Credits
+
+* **Yousef Ali** ([@YousefAliMLS](https://github.com/YousefAliMLS)): Project founder, software architect, lead maintainer.
+* **Gemini Flash 3.8 High** (Google DeepMind): Wayland/X11 clipboard synchronization architecture, background D-Bus service, Copy as Path integration, and Debian release packaging.
+* **Claude Opus 5.5** (Anthropic): Initial foundation, GTK 4 Libadwaita user interface, SQLite storage engine, and uinput keystroke injection.
+
+See [CONTRIBUTORS.md](CONTRIBUTORS.md) for full details.
 
 ---
 
