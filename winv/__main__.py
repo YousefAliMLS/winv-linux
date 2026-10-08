@@ -44,7 +44,9 @@ def main() -> int:
     if cmd == "clear":
         from .storage import Store
         Store().clear(keep_pinned=not args.all)
-        print("History cleared.")
+        from .copypath import clear_clipboard_remote
+        clear_clipboard_remote()
+        print("History and clipboard cleared.")
         return 0
     if cmd == "copy-path":
         from .copypath import copy_paths_to_clipboard

@@ -27,7 +27,7 @@ import gi
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gdk, GdkPixbuf, GLib, GObject, Gtk  # noqa: E402
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk  # noqa: E402
 
 from . import config  # noqa: E402
 from .storage import Store  # noqa: E402
@@ -163,21 +163,62 @@ class Watcher:
             log.exception("Failed to save clipboard entry")
 
 
-def main() -> int:
+    def set_clipboard_text(self, text: str) -> None:
+        if not text:
+            return
+        log.info("Setting X11 clipboard text (%d chars)", len(text))
+        self.clipboard.set(text)
+        digest = "t:" + hashlib.sha1(text.encode("utf-8", "surrogatepass")).hexdigest()
+        self._commit("text", text, digest)
+
+    def clear_clipboard(self) -> None:
+        log.info("Clearing X11 clipboard")
+        self.clipboard.set_content(None)
+
+
+class WatcherApp(Gtk.Application):
+    def __init__(self) -> None:
+        super().__init__(
+            application_id="io.github.winv.Watcher",
+            flags=Gio.ApplicationFlags.FLAGS_NONE,
+        )
+        self.watcher: Watcher | None = None
+
+    def do_activate(self) -> None:
+        if self.watcher is None:
+            self.hold()
+            try:
+                self.watcher = Watcher()
+            except Exception as exc:  # noqa: BLE001
+                log.error("Failed to start Watcher: %s", exc)
+                self.release()
+                return
+
+            set_action = Gio.SimpleAction.new("set-text", GLib.VariantType.new("s"))
+            set_action.connect("activate", self._on_set_text)
+            self.add_action(set_action)
+
+            clear_action = Gio.SimpleAction.new("clear", None)
+            clear_action.connect("activate", self._on_clear)
+            self.add_action(clear_action)
+
+    def _on_set_text(self, _action: Gio.SimpleAction, param: GLib.Variant) -> None:
+        if self.watcher:
+            self.watcher.set_clipboard_text(param.get_string())
+
+    def _on_clear(self, _action: Gio.SimpleAction, _param: GLib.Variant | None) -> None:
+        if self.watcher:
+            self.watcher.clear_clipboard()
+
+
+def main(argv: list[str] | None = None) -> int:
     if not Gtk.init_check():
         log.error("GTK could not initialise the X11 backend (DISPLAY=%s)", os.environ.get("DISPLAY"))
         return 1
-    try:
-        Watcher()
-    except Exception as exc:  # noqa: BLE001
-        log.error("%s", exc)
-        return 1
-
-    loop = GLib.MainLoop()
+    app = WatcherApp()
     for sig in (signal.SIGINT, signal.SIGTERM):
-        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, sig, loop.quit)
-    loop.run()
-    return 0
+        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, sig, app.quit)
+    return app.run([sys.argv[0]])
 
 
 if __name__ == "__main__":

@@ -65,8 +65,27 @@ def copy_paths_to_clipboard(
 
     from gi.repository import Gio
 
-    # 1. Try D-Bus activation to the resident WinV UI (instant & persistent on native Wayland)
-    dbus_ok = False
+    # 1. Primary: Send to resident Watcher daemon (holds on X11, bridged to Wayland by Mutter)
+    sent_to_watcher = False
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        param = GLib.Variant("s", clipboard_text)
+        bus.call_sync(
+            "io.github.winv.Watcher",
+            "/io/github/winv/Watcher",
+            "org.gtk.Actions",
+            "Activate",
+            GLib.Variant("(sava{sv})", ("set-text", [param], {})),
+            None,
+            Gio.DBusCallFlags.NONE,
+            500,
+            None,
+        )
+        sent_to_watcher = True
+    except Exception:
+        pass
+
+    # 2. Also notify WinV UI if running
     try:
         bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         param = GLib.Variant("s", clipboard_text)
@@ -78,25 +97,27 @@ def copy_paths_to_clipboard(
             GLib.Variant("(sava{sv})", ("copy-text", [param], {})),
             None,
             Gio.DBusCallFlags.NONE,
-            500,
+            300,
             None,
         )
-        dbus_ok = True
     except Exception:
         pass
 
-    # 2. Fallback to direct GTK clipboard
-    if not dbus_ok:
-        Gtk.init()
-        display = Gdk.Display.get_default()
-        if display:
-            cb = display.get_clipboard()
-            cb.set(clipboard_text)
-            loop = GLib.MainLoop()
-            GLib.timeout_add(300, loop.quit)
-            loop.run()
+    # 3. Fallback: direct X11 clipboard if Watcher was not running
+    if not sent_to_watcher:
+        try:
+            Gtk.init()
+            display = Gdk.Display.get_default()
+            if display:
+                cb = display.get_clipboard()
+                cb.set(clipboard_text)
+                loop = GLib.MainLoop()
+                GLib.timeout_add(300, loop.quit)
+                loop.run()
+        except Exception:
+            pass
 
-    # 3. Ensure entry is in WinV history
+    # 4. Always ensure entry is in WinV history
     try:
         import hashlib
         from .storage import Store
@@ -158,3 +179,42 @@ def run(args: list[str] | None = None) -> int:
         return 0
     print("No paths specified or detected from environment.", file=sys.stderr)
     return 1
+
+
+def clear_clipboard_remote() -> None:
+    """Clear both X11 (Watcher) and Wayland (WinV) clipboards remotely."""
+    from gi.repository import Gio, GLib
+
+    # 1. Clear Watcher (X11)
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync(
+            "io.github.winv.Watcher",
+            "/io/github/winv/Watcher",
+            "org.gtk.Actions",
+            "Activate",
+            GLib.Variant("(sava{sv})", ("clear", [], {})),
+            None,
+            Gio.DBusCallFlags.NONE,
+            300,
+            None,
+        )
+    except Exception:
+        pass
+
+    # 2. Clear WinV UI (Wayland)
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync(
+            "io.github.winv.WinV",
+            "/io/github/winv/WinV",
+            "org.gtk.Actions",
+            "Activate",
+            GLib.Variant("(sava{sv})", ("clear-clipboard", [], {})),
+            None,
+            Gio.DBusCallFlags.NONE,
+            300,
+            None,
+        )
+    except Exception:
+        pass

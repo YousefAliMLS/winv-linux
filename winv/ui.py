@@ -280,8 +280,9 @@ class MainWindow(Adw.ApplicationWindow):
 
     def clear_history(self) -> None:
         self.app.store.clear(keep_pinned=True)
+        self.app.clear_clipboard()
         self.refresh_history(force=True)
-        self.toasts.add_toast(Adw.Toast(title="History cleared (pinned items kept)", timeout=2))
+        self.toasts.add_toast(Adw.Toast(title="History & clipboard cleared (pinned items kept)", timeout=2))
 
     # ---------------------------------------------------------------- emoji tab
     def _build_emoji_page(self) -> None:
@@ -535,6 +536,10 @@ class WinVApp(Adw.Application):
         copy_action = Gio.SimpleAction.new("copy-text", GLib.VariantType.new("s"))
         copy_action.connect("activate", lambda _a, param: self.commit_text(param.get_string(), paste=False))
         self.add_action(copy_action)
+
+        clear_clip_action = Gio.SimpleAction.new("clear-clipboard", None)
+        clear_clip_action.connect("activate", lambda *_: self.clear_clipboard())
+        self.add_action(clear_clip_action)
         self.win = MainWindow(self)
 
     def do_activate(self) -> None:
@@ -584,12 +589,50 @@ class WinVApp(Adw.Application):
         except Exception:  # noqa: BLE001
             log.exception("Could not update usage time")
 
+    def clear_clipboard(self) -> None:
+        try:
+            self._clipboard().set_content(None)
+        except Exception as exc:
+            log.debug("Could not clear Wayland clipboard: %s", exc)
+        try:
+            bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+            bus.call_sync(
+                "io.github.winv.Watcher",
+                "/io/github/winv/Watcher",
+                "org.gtk.Actions",
+                "Activate",
+                GLib.Variant("(sava{sv})", ("clear", [], {})),
+                None,
+                Gio.DBusCallFlags.NONE,
+                300,
+                None,
+            )
+        except Exception:
+            pass
+
     def commit_text(self, text: str, paste: bool, transient: bool = False) -> None:
         provider = Gdk.ContentProvider.new_for_value(text)
         if transient:
             marker = Gdk.ContentProvider.new_for_bytes(TRANSIENT_MIME, GLib.Bytes.new(b"1"))
             provider = Gdk.ContentProvider.new_union([provider, marker])
         self._clipboard().set_content(provider)
+        if not transient:
+            try:
+                bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+                param = GLib.Variant("s", text)
+                bus.call_sync(
+                    "io.github.winv.Watcher",
+                    "/io/github/winv/Watcher",
+                    "org.gtk.Actions",
+                    "Activate",
+                    GLib.Variant("(sava{sv})", ("set-text", [param], {})),
+                    None,
+                    Gio.DBusCallFlags.NONE,
+                    200,
+                    None,
+                )
+            except Exception:
+                pass
         self._finish(paste)
 
     def _finish(self, paste: bool) -> None:
