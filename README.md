@@ -122,8 +122,8 @@ Community contributions, issue reports, and feature requests are welcome.
 ## Contributors and Credits
 
 * **Yousef Ali** ([@YousefAliMLS](https://github.com/YousefAliMLS)): Project founder, software architect, lead maintainer.
-* **Gemini Flash 3.8 High** (Google DeepMind): Wayland/X11 clipboard synchronization architecture, background D-Bus service, Copy as Path integration, and Debian release packaging.
-* **Claude Opus 5.5** (Anthropic): Initial foundation, GTK 4 Libadwaita user interface, SQLite storage engine, and uinput keystroke injection.
+* **Gemini Flash 3.8 High** ([@gemini-code-assist](https://github.com/gemini-code-assist)) (Google DeepMind): Wayland/X11 clipboard synchronization architecture, background D-Bus service, Copy as Path integration, and Debian release packaging.
+* **Claude Opus 5.5** ([@claude](https://github.com/claude)) (Anthropic): Initial foundation, GTK 4 Libadwaita user interface, SQLite storage engine, and uinput keystroke injection.
 
 See [CONTRIBUTORS.md](CONTRIBUTORS.md) for full details.
 
